@@ -1,36 +1,130 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+
+import { fetchCurrentUser, updateUserRole } from './redux/authSlice';
+import { fetchProfile } from './redux/profileSlice';
+
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import RoleSelection from './pages/RoleSelection';
+import Dashboard from './pages/Dashboard';
+import CompleteProfile from './pages/CompleteProfile';
+import ManageProfile from './pages/ManageProfile';
+
 import Navbar from './components/Navbar';
-import AddressBookListPage from './components/AddressBookListPage';
-import ContactListPage from './components/ContactListPage';
-import AddBookPage from './components/AddBookPage';
+import BrowseJobs from './pages/BrowseJobs';
+import PostJob from './pages/PostJob';
+import JobDetails from './pages/JobDetails';
+import EditJob from './pages/EditJob';
+import ApplyJob from './pages/ApplyJob';
+import JobApplications from './pages/JobApplications';
+import JobApplicants from './pages/JobApplicants';
+import Subscription from './pages/Subscription';
+import Billing from './pages/Billing';
+import NotificationsPage from './pages/NotificationsPage';
+import AdminDashboard from './pages/AdminDashboard'; // Added
 
 function App() {
+  const dispatch = useDispatch();
+  const location = useLocation();
+
+  const { user, isAuthenticated, selectedRole } = useSelector((state) => state.auth);
+  const { profileExists, loading: profileLoading } = useSelector((state) => state.profile);
+
+  useEffect(() => {
+    dispatch(fetchCurrentUser()).then((action) => {
+      const userData = action.payload;
+      if (!userData) return;
+
+      if (!userData.role && selectedRole) {
+        dispatch(updateUserRole(selectedRole)).then(() => {
+          dispatch(fetchCurrentUser());
+        });
+      }
+    });
+  }, [dispatch, selectedRole]);
+
+  useEffect(() => {
+    if (isAuthenticated && user?.email) {
+      dispatch(fetchProfile(user.email));
+    }
+  }, [isAuthenticated, user?.email, dispatch]);
+
+  if (
+    user?.role !== 'ADMIN' &&
+    isAuthenticated &&
+    profileExists === false &&
+    profileExists !== null &&
+    !profileLoading &&
+    location.pathname !== '/complete-profile'
+  ) {
+    return <Navigate to="/complete-profile" replace />;
+  }
+
   return (
-    <Router>
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        <Navbar />
-        <main className="flex-grow">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/address-books" element={<AddressBookListPage />} />
-            <Route path="/add-book" element={<AddBookPage />} />
-            <Route path="/address-book/:id" element={<ContactListPage />} />
-          </Routes>
-        </main>
-        <footer className="bg-white border-t py-6 text-center text-gray-500">
-          © 2024 AddressBook App - Built with Spring Boot & React
-        </footer>
+    <>
+      <Navbar />
+      <div className="pt-16">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route
+            path="/login"
+            element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" />}
+          />
+          <Route path="/signup" element={!isAuthenticated ? <Signup /> : <Navigate to="/dashboard" />} />
+          <Route path="/select-role" element={<RoleSelection />} />
+          <Route path="/dashboard" element={
+            isAuthenticated ? (
+              user?.role === 'ADMIN' ? (
+                <AdminDashboard />
+              ) : (
+                <Dashboard />
+              )
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } />
+          <Route path="/complete-profile" element={<CompleteProfile />} />
+          <Route path="/manage-profile" element={<ManageProfile />} />
+          <Route path="/jobs" element={<BrowseJobs />} />
+          <Route path="/jobs/:id" element={<JobDetails />} />
+          <Route path="/jobs/:id/apply" element={<ApplyJob />} />
+          <Route path="/post-job" element={isAuthenticated && user?.role === 'RECRUITER'
+            ? <PostJob />
+            : <Navigate to="/dashboard" />
+          } />
+
+          <Route path="/edit-job/:id" element={isAuthenticated && user?.role === 'RECRUITER'
+            ? <EditJob />
+            : <Navigate to="/dashboard" />
+          } />
+          <Route path="/subscription" element={isAuthenticated && user?.role === 'RECRUITER'
+            ? <Subscription />
+            : <Navigate to="/dashboard" />
+          } />
+          <Route path="/billing" element={isAuthenticated && user?.role === 'RECRUITER'
+            ? <Billing />
+            : <Navigate to="/dashboard" />
+          } />
+          <Route
+            path="/analytics/:jobId" element={isAuthenticated ? (user?.role === 'ADMIN' ? (
+              <AdminDashboard />
+            ) : (
+              <JobApplicants />
+            )
+            ) : (
+              <Navigate to="/login" replace />
+            )
+            } />
+          <Route path="/jobs/:jobId/applications" element={<JobApplications />} />
+          <Route path="/job/:jobId/applicants" element={<JobApplicants />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
+        </Routes>
       </div>
-    </Router>
+    </>
   );
 }
-
-const Home = () => (
-  <div className="text-center py-20">
-    <h1 className="text-5xl font-extrabold text-gray-900 mb-4">Manage Your Contacts Seamlessly</h1>
-    <p className="text-xl text-gray-600 mb-8">Secure, organized, and accessible from anywhere.</p>
-    <a href="/address-books" className="bg-blue-600 text-white px-8 py-3 rounded-full text-lg hover:bg-blue-700">Get Started</a>
-  </div>
-);
 
 export default App;
