@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate, useLocation, NavLink } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '../redux/authSlice';
 import { fetchMySubscriptions } from '../redux/subscriptionSlice';
@@ -8,225 +8,301 @@ import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 import {
   Briefcase, LogOut, LayoutDashboard,
-  Bell, Search, Menu, X, ChevronRight, Plus,
-  FileCode, ExternalLink, Zap
+  Bell, Search, Menu, X, Plus,
+  FileCode, Zap, User, ChevronDown, ExternalLink
 } from 'lucide-react';
 
 const Navbar = () => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const { active: subscriptions } = useSelector((state) => state.subscription);
   const { items: notifications, unreadCount } = useSelector((state) => state.notifications);
+  
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+  const stompClientRef = useRef(null);
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
 
   const isRecruiter = user?.role === 'RECRUITER';
   const hasActiveSubscription = subscriptions?.some(sub => sub.status === 'SUBSCRIBED');
   const DOCS_URL = "http://localhost:8080/webjars/swagger-ui/index.html";
 
-  // Handle Scroll Effect
+  // 1. Initial Data Fetch & Scroll Listener
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
+    
     if (isAuthenticated) {
       if (isRecruiter) dispatch(fetchMySubscriptions());
       dispatch(fetchNotifications());
     }
+    
     return () => window.removeEventListener("scroll", handleScroll);
   }, [dispatch, isAuthenticated, isRecruiter]);
 
-  // FIX: Robust WebSocket Connection Logic
+  // 2. Production-Grade WebSocket Setup
   useEffect(() => {
     if (!isAuthenticated || !user?.email) return;
 
-    const userEmail = user.email.toLowerCase();
-    // Ensure the URL matches your Gateway exactly
     const socket = new SockJS("http://localhost:8080/api/notifications/ws-notifications");
-
     const client = new Client({
       webSocketFactory: () => socket,
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
       onConnect: () => {
-        const topic = `/topic/notifications/${userEmail}`;
-        console.log("✅ WS Connected. Subscribing to:", topic);
-
+        const topic = `/topic/notifications/${user.email.toLowerCase()}`;
         client.subscribe(topic, (msg) => {
-          // THIS LOG IS CRITICAL - If you don't see this, the message didn't reach the browser
-          console.log("🔔 MESSAGE RECEIVED IN BROWSER:", msg.body);
-
           try {
             const newNotif = JSON.parse(msg.body);
             dispatch(addNotification(newNotif));
           } catch (err) {
-            console.error("❌ Failed to parse notification body", err);
+            console.error("Notification Parse Error", err);
           }
         });
       },
-      onStompError: (frame) => {
-        console.error('Broker error:', frame.headers['message']);
-        console.error('Details:', frame.body);
-      },
+      onStompError: (frame) => console.error('Broker error:', frame.headers['message']),
     });
 
     client.activate();
+    stompClientRef.current = client;
 
     return () => {
-      if (client.active) {
-        client.deactivate();
-        console.log("🔌 WS Disconnected");
+      if (stompClientRef.current) {
+        stompClientRef.current.deactivate();
       }
     };
   }, [isAuthenticated, user?.email, dispatch]);
 
+  // 3. Close menus on route change
   useEffect(() => {
     setIsMenuOpen(false);
     setShowNotifDropdown(false);
+    setShowUserDropdown(false);
   }, [location]);
 
-  const isActive = (path) => location.pathname === path;
+  const closeAllMenus = () => {
+    setIsMenuOpen(false);
+    setShowNotifDropdown(false);
+    setShowUserDropdown(false);
+  };
 
   return (
     <>
-      <nav className={`fixed w-full z-[100] transition-all duration-500 flex justify-center ${isScrolled ? 'top-4' : 'top-0'}`}>
-        <div className={`transition-all duration-500 flex items-center justify-between px-6 h-16 ${isScrolled
-            ? 'w-[95%] md:w-[92%] max-w-7xl bg-white/80 backdrop-blur-xl shadow-2xl shadow-slate-200/50 rounded-[2rem] border border-white/20'
-            : 'w-full max-w-7xl bg-white border-b border-slate-100'
-          }`}>
+      <header 
+        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
+          isScrolled 
+          ? 'bg-white/90 backdrop-blur-md border-b border-slate-200 py-2 shadow-sm' 
+          : 'bg-white py-4'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-12">
+            
+            {/* BRAND SECTION */}
+            <div className="flex items-center gap-8">
+              <Link to="/" className="flex items-center gap-2.5 group shrink-0">
+                <div className="bg-indigo-600 p-2 rounded-xl shadow-lg shadow-indigo-100 group-hover:scale-105 transition-transform">
+                  <Briefcase className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xl font-bold tracking-tight text-slate-900">
+                  Job<span className="text-indigo-600">Portal</span>
+                </span>
+              </Link>
 
-          <div className="flex items-center gap-4">
-            <Link to="/" className="flex items-center gap-2.5 group shrink-0">
-              <div className="bg-slate-900 p-2 rounded-xl group-hover:bg-blue-600 transition-all">
-                <Briefcase className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-black tracking-tighter text-slate-900 uppercase hidden lg:block">
-                Job<span className="text-blue-600">Portal</span>
-              </span>
-            </Link>
+              {/* DESKTOP NAV */}
+              {isAuthenticated && (
+                <nav className="hidden lg:flex items-center gap-1">
+                  <NavTab to="/dashboard" label="Dashboard" icon={<LayoutDashboard size={18} />} />
+                  <NavTab to="/jobs" label="Browse" icon={<Search size={18} />} />
+                  {isRecruiter && <NavTab to="/post-job" label="Post Job" icon={<Plus size={18} />} />}
+                  <a 
+                    href={DOCS_URL} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors"
+                  >
+                    <FileCode size={18} /> Docs
+                  </a>
+                </nav>
+              )}
+            </div>
 
-            {isAuthenticated && (
-              <div className="hidden md:flex items-center gap-1">
-                <DesktopNavLink to="/dashboard" active={isActive('/dashboard')} icon={<LayoutDashboard size={14} />}>Dashboard</DesktopNavLink>
-                <DesktopNavLink to="/jobs" active={isActive('/jobs')} icon={<Search size={14} />}>Browse</DesktopNavLink>
-                {isRecruiter && (
-                  <DesktopNavLink to="/post-job" active={isActive('/post-job')} icon={<Plus size={14} />}>Post Job</DesktopNavLink>
-                )}
-                {/* DOCS BUTTON */}
-                <a href={DOCS_URL} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all">
-                  <FileCode size={14} /> Docs
-                </a>
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
-            {isAuthenticated ? (
-              <>
-                {/* UPGRADE NUDGE */}
-                {isRecruiter && !hasActiveSubscription && (
-                  <button onClick={() => navigate('/subscription')} className="hidden xl:flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-600 border border-amber-100 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-100 transition-all">
-                    <Zap size={14} fill="currentColor" /> Upgrade
-                  </button>
-                )}
-
-                {/* NOTIFICATIONS */}
-                <div className="relative">
-                  <button onClick={() => setShowNotifDropdown(!showNotifDropdown)} className={`p-2.5 rounded-full transition-all relative ${showNotifDropdown ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-blue-50'}`}>
-                    <Bell size={20} />
-                    {unreadCount > 0 && (
-                      <span className="absolute top-1.5 right-1.5 w-5 h-5 bg-rose-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white animate-bounce">
-                        {unreadCount > 9 ? '9+' : unreadCount}
-                      </span>
-                    )}
-                  </button>
-
-                  {showNotifDropdown && (
-                    <div className="absolute right-0 mt-4 w-80 bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in duration-200">
-                      <div className="p-4 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Notifications</span>
-                        <Link to="/notifications" className="text-[10px] font-black uppercase text-blue-600">View All</Link>
-                      </div>
-                      <div className="max-h-80 overflow-y-auto">
-                        {notifications.length === 0 ? (
-                          <div className="p-10 text-center text-slate-400 uppercase font-black text-[10px]">Empty</div>
-                        ) : (
-                          notifications.slice(0, 5).map(n => (
-                            <div key={n.notificationId} onClick={() => { if (!n.read) dispatch(markAsRead(n.notificationId)); navigate('/notifications'); }} className={`p-4 border-b border-slate-50 cursor-pointer hover:bg-slate-50 relative ${!n.read ? 'bg-blue-50/30 font-bold' : ''}`}>
-                              {!n.read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600" />}
-                              <p className="text-xs line-clamp-2">{n.message}</p>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
+            {/* ACTIONS SECTION */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              {isAuthenticated ? (
+                <>
+                  {/* RECRUITER UPGRADE NUDGE */}
+                  {isRecruiter && !hasActiveSubscription && (
+                    <button 
+                      onClick={() => navigate('/subscription')}
+                      className="hidden md:flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-bold hover:bg-amber-100 transition-all active:scale-95"
+                    >
+                      <Zap size={14} className="fill-amber-500" /> Upgrade
+                    </button>
                   )}
-                </div>
 
-                {/* PROFILE & LOGOUT */}
-                <div className="hidden md:flex items-center gap-2 p-1 pl-2 bg-slate-50 border border-slate-200 rounded-2xl">
-                  <div onClick={() => navigate('/manage-profile')} className="flex items-center gap-2 cursor-pointer pr-2">
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-black shadow-md ${hasActiveSubscription ? 'bg-amber-500' : 'bg-blue-600'}`}>
-                      {user?.email[0].toUpperCase()}
-                    </div>
-                    <div className="text-left hidden lg:block">
-                      <p className={`text-[8px] font-black uppercase tracking-[0.15em] mb-0.5 ${hasActiveSubscription ? 'text-amber-600' : 'text-blue-600'}`}>
-                        {hasActiveSubscription ? 'PREMIUM' : user?.role}
-                      </p>
-                      <p className="text-xs font-bold text-slate-700 max-w-[80px] truncate">{user?.email.split('@')[0]}</p>
-                    </div>
+                  {/* NOTIFICATIONS */}
+                  <div className="relative">
+                    <button 
+                      aria-label="Notifications"
+                      onClick={() => { setShowNotifDropdown(!showNotifDropdown); setShowUserDropdown(false); }}
+                      className={`p-2.5 rounded-2xl transition-all relative ${
+                        showNotifDropdown ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:bg-slate-100'
+                      }`}
+                    >
+                      <Bell size={22} />
+                      {unreadCount > 0 && (
+                        <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white animate-pulse" />
+                      )}
+                    </button>
+
+                    {showNotifDropdown && (
+                      <div className="fixed sm:absolute right-4 sm:right-0 left-4 sm:left-auto top-16 sm:top-full mt-3 sm:w-80 bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden z-[110] animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                        <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                          <span className="font-bold text-slate-800">Notifications</span>
+                          <Link to="/notifications" className="text-xs font-bold text-indigo-600 hover:underline">View All</Link>
+                        </div>
+                        <div className="max-h-[380px] overflow-y-auto">
+                          {notifications.length === 0 ? (
+                            <div className="p-10 text-center text-slate-400 text-sm italic">No new notifications</div>
+                          ) : (
+                            notifications.slice(0, 5).map(n => (
+                              <div 
+                                key={n.notificationId} 
+                                onClick={() => { if (!n.read) dispatch(markAsRead(n.notificationId)); navigate('/notifications'); }} 
+                                className={`px-5 py-4 border-b border-slate-50 cursor-pointer hover:bg-slate-50 transition-colors flex gap-3 ${!n.read ? 'bg-indigo-50/30' : ''}`}
+                              >
+                                <div className={`w-1.5 h-1.5 rounded-full mt-2 shrink-0 ${!n.read ? 'bg-indigo-600' : 'bg-slate-200'}`} />
+                                <p className={`text-sm leading-snug ${!n.read ? 'font-semibold text-slate-900' : 'text-slate-600'}`}>
+                                  {n.message}
+                                </p>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <button onClick={() => dispatch(logoutUser()).then(() => navigate('/'))} className="p-2 text-slate-400 hover:text-rose-600 transition">
-                    <LogOut size={16} />
-                  </button>
+
+                  {/* USER MENU */}
+                  <div className="relative">
+                    <button 
+                      onClick={() => { setShowUserDropdown(!showUserDropdown); setShowNotifDropdown(false); }}
+                      className="flex items-center gap-2 p-1 pr-3 rounded-2xl border border-slate-200 hover:bg-slate-50 transition-all active:scale-95"
+                    >
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-sm ${hasActiveSubscription ? 'bg-amber-500' : 'bg-indigo-600'}`}>
+                        {user?.email[0].toUpperCase()}
+                      </div>
+                      <ChevronDown size={14} className={`text-slate-400 transition-transform duration-300 ${showUserDropdown ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {showUserDropdown && (
+                      <div className="absolute right-0 mt-3 w-60 bg-white rounded-2xl shadow-2xl border border-slate-200 py-2 z-[110] animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                        <div className="px-5 py-3 border-b border-slate-100 mb-2">
+                          <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">{user?.role}</p>
+                          <p className="text-sm font-bold text-slate-900 truncate">{user?.email}</p>
+                        </div>
+                        <DropdownItem to="/manage-profile" icon={<User size={18} />} label="My Profile" />
+                        {isRecruiter && <DropdownItem to="/subscription" icon={<Zap size={18} />} label="Subscription" />}
+                        <hr className="my-2 border-slate-50" />
+                        <button 
+                          onClick={() => dispatch(logoutUser()).then(() => navigate('/'))} 
+                          className="w-full flex items-center gap-3 px-5 py-2.5 text-sm text-rose-600 hover:bg-rose-50 transition-colors font-bold"
+                        >
+                          <LogOut size={18} /> Logout
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <Link to="/login" className="px-4 py-2 text-sm font-bold text-slate-600 hover:text-indigo-600">Login</Link>
+                  <Link to="/signup" className="px-6 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-2xl hover:bg-indigo-600 transition-all shadow-lg shadow-slate-100">
+                    Join Now
+                  </Link>
                 </div>
-              </>
-            ) : (
-              <div className="hidden md:flex items-center gap-3">
-                <Link to="/login" className="px-5 py-2 text-xs font-black text-slate-500 uppercase tracking-widest">Login</Link>
-                <Link to="/signup" className="px-6 py-3 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-600 transition-all">Join Now</Link>
-              </div>
-            )}
+              )}
 
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="md:hidden p-2 text-slate-900 bg-slate-100 rounded-xl">
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+              {/* MOBILE MENU TOGGLE */}
+              <button 
+                aria-label="Toggle Menu"
+                onClick={() => { setIsMenuOpen(!isMenuOpen); setShowNotifDropdown(false); setShowUserDropdown(false); }} 
+                className="lg:hidden p-2 text-slate-600 bg-slate-50 rounded-xl hover:bg-slate-100"
+              >
+                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* MOBILE MENU */}
-        <div className={`md:hidden absolute top-[110%] left-0 w-full px-4 transition-all duration-300 ${isMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-          <div className="bg-white rounded-[2rem] shadow-2xl border border-slate-100 p-6 space-y-4">
-            <MobileNavLink to="/dashboard" icon={<LayoutDashboard size={20} />} label="Dashboard" />
-            <a href={DOCS_URL} target="_blank" rel="noreferrer" className="flex items-center justify-between p-4 text-slate-700 font-black text-xs uppercase tracking-widest bg-slate-50 rounded-2xl">
-              <div className="flex items-center gap-3"><FileCode size={20} /> API Docs</div>
-              <ExternalLink size={16} />
-            </a>
-            <button onClick={() => dispatch(logoutUser())} className="w-full flex items-center gap-3 p-4 text-rose-600 font-black text-xs uppercase tracking-widest bg-rose-50 rounded-2xl">
-              <LogOut size={20} /> Logout
-            </button>
+        {/* MOBILE DRAWER */}
+        {isMenuOpen && (
+          <div className="lg:hidden absolute top-full left-0 w-full bg-white border-b border-slate-200 shadow-2xl animate-in slide-in-from-top-2 duration-300">
+            <nav className="p-5 space-y-2">
+              {isAuthenticated ? (
+                <>
+                  <MobileNavLink to="/dashboard" icon={<LayoutDashboard size={20} />} label="Dashboard" />
+                  <MobileNavLink to="/jobs" icon={<Search size={20} />} label="Browse Jobs" />
+                  {isRecruiter && <MobileNavLink to="/post-job" icon={<Plus size={20} />} label="Post a Job" />}
+                  <a href={DOCS_URL} className="flex items-center justify-between p-4 text-slate-600 font-bold bg-slate-50 rounded-2xl">
+                    <div className="flex items-center gap-3"><FileCode size={20} /> API Docs</div>
+                    <ExternalLink size={16} className="text-slate-400" />
+                  </a>
+                  <button onClick={() => dispatch(logoutUser())} className="w-full flex items-center gap-3 p-4 text-rose-600 font-bold bg-rose-50 rounded-2xl">
+                    <LogOut size={20} /> Logout
+                  </button>
+                </>
+              ) : (
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <Link to="/login" className="py-4 text-center font-bold text-slate-600 bg-slate-50 rounded-2xl">Login</Link>
+                  <Link to="/signup" className="py-4 text-center font-bold bg-indigo-600 text-white rounded-2xl shadow-lg shadow-indigo-100">Join</Link>
+                </div>
+              )}
+            </nav>
           </div>
-        </div>
-      </nav>
-      {showNotifDropdown && <div className="fixed inset-0 z-[90]" onClick={() => setShowNotifDropdown(false)} />}
+        )}
+      </header>
+
+      {/* CLICK-OUTSIDE BACKDROP */}
+      {(showNotifDropdown || showUserDropdown || isMenuOpen) && (
+        <div 
+          className="fixed inset-0 z-[90] bg-slate-900/5 backdrop-blur-[1px]" 
+          onClick={closeAllMenus} 
+        />
+      )}
     </>
   );
 };
 
-const DesktopNavLink = ({ to, children, active, icon }) => (
-  <Link to={to} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${active ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-900'}`}>
-    {icon} {children}
+// HELPER COMPONENTS
+const NavTab = ({ to, label, icon }) => (
+  <NavLink 
+    to={to} 
+    className={({ isActive }) => `flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+      isActive ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+    }`}
+  >
+    {icon} {label}
+  </NavLink>
+);
+
+const DropdownItem = ({ to, icon, label }) => (
+  <Link to={to} className="flex items-center gap-3 px-5 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors font-semibold">
+    <span className="text-slate-400">{icon}</span>
+    {label}
   </Link>
 );
 
 const MobileNavLink = ({ to, icon, label }) => (
-  <Link to={to} className="flex items-center justify-between p-4 text-slate-700 font-black text-xs uppercase tracking-widest bg-slate-50 rounded-2xl">
-    <div className="flex items-center gap-3">{icon} <span>{label}</span></div>
-    <ChevronRight size={16} />
+  <Link to={to} className="flex items-center gap-4 p-4 text-slate-700 font-bold rounded-2xl hover:bg-indigo-50 hover:text-indigo-600 transition-all">
+    <div className="text-slate-400 group-hover:text-indigo-600">{icon}</div>
+    <span>{label}</span>
   </Link>
 );
 
