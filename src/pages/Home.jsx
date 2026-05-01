@@ -1,167 +1,213 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { loginUser } from '../redux/authSlice';
 import { 
   Search, Users, ArrowRight, Building2, 
-  Zap, Globe, ShieldCheck, Sparkles 
+  Zap, Globe, ShieldCheck, Sparkles, 
+  Mail, Lock, Loader2, LayoutDashboard
 } from 'lucide-react';
 
 const Home = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  const { isAuthenticated, user, loading, error } = useSelector((state) => state.auth);
+
+  // Local state for the integrated login form
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    dispatch(loginUser({ email, password }));
+  };
+
+  const handleSocialLogin = (provider) => {
+    window.location.href = `http://localhost:8080/api/auth/oauth2/authorization/${provider}`;
+  };
 
   return (
     <div className="min-h-screen bg-[#f8fafc] overflow-x-hidden">
       
-      {/* 1. HERO SECTION */}
-      <section className="relative pt-28 sm:pt-36 pb-16 sm:pb-24 px-6 overflow-hidden">
-        {/* Subtle Background Glow - Optimized for mobile */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full sm:w-3/4 h-80 sm:h-96 bg-blue-50/50 blur-[80px] sm:blur-[120px] rounded-full -z-10" />
+      {/* 1. HERO SECTION - Conditional Rendering */}
+      <section className="relative pt-20 sm:pt-32 pb-16 sm:pb-24 px-6">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-50/50 via-transparent to-transparent -z-10" />
         
-        <div className="max-w-5xl mx-auto text-center space-y-6 sm:space-y-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 sm:px-4 sm:py-1.5 bg-white rounded-full shadow-sm border border-slate-200">
-            <Sparkles size={14} className="text-blue-600 shrink-0" />
-            <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-slate-500 whitespace-nowrap">
-              The Future of Talent Acquisition
-            </span>
-          </div>
-          
-          <h1 className="text-4xl sm:text-6xl md:text-8xl font-black text-slate-900 tracking-tighter leading-[1.1] sm:leading-[0.95]">
-            Hiring. <span className="text-blue-600 block sm:inline">Evolved.</span>
-          </h1>
-          
-          <p className="max-w-2xl mx-auto text-slate-500 text-base sm:text-lg md:text-xl font-medium leading-relaxed px-2">
-            The intelligent platform connecting the world's most ambitious 
-            companies with elite professionals.
-          </p>
+        <div className="max-w-7xl mx-auto">
+          {!isAuthenticated ? (
+            /* --- LOGGED OUT VIEW: Split Hero with Login Form --- */
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+              <div className="lg:col-span-7 space-y-8 text-center lg:text-left">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white rounded-full shadow-sm border border-slate-200">
+                  <Sparkles size={14} className="text-indigo-600" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">The Future of Talent</span>
+                </div>
+                <h1 className="text-5xl sm:text-7xl font-black text-slate-900 tracking-tighter leading-[1.05]">
+                  Hiring. <br />
+                  <span className="text-indigo-600 italic">Evolved.</span>
+                </h1>
+                <p className="max-w-xl mx-auto lg:mx-0 text-slate-500 text-lg font-medium leading-relaxed">
+                  Join the elite network connecting ambitious companies with world-class professionals. 
+                </p>
+                <div className="flex flex-wrap justify-center lg:justify-start gap-6 text-slate-400">
+                   <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest"><ShieldCheck size={16} className="text-emerald-500"/> Verified</div>
+                   <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest"><Zap size={16} className="text-amber-500"/> Real-time</div>
+                   <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest"><Globe size={16} className="text-blue-500"/> Global</div>
+                </div>
+              </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4 px-4 sm:px-0">
-            {!isAuthenticated ? (
-              <>
-                <button 
-                  onClick={() => navigate('/signup')}
-                  className="w-full sm:w-auto px-10 py-4 sm:py-5 bg-slate-900 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-blue-600 transition-all shadow-xl active:scale-95"
-                >
-                  Create Account
-                </button>
-                <button 
-                  onClick={() => navigate('/jobs')}
-                  className="w-full sm:w-auto px-10 py-4 sm:py-5 bg-white text-slate-900 border border-slate-200 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
-                >
-                  <Search size={16} /> Explore Jobs
-                </button>
-              </>
-            ) : (
-              <button 
-                onClick={() => navigate('/dashboard')}
-                className="w-full sm:w-auto px-12 py-4 sm:py-5 bg-blue-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 flex items-center justify-center gap-3"
-              >
-                Go to Workspace <ArrowRight size={18} />
-              </button>
-            )}
-          </div>
+              <div className="lg:col-span-5">
+                <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/50 p-8 sm:p-10 border border-slate-100">
+                  <h2 className="text-2xl font-black text-slate-900 mb-2">Welcome Back</h2>
+                  <p className="text-slate-400 text-sm font-medium mb-8">Login to your professional portal</p>
+                  
+                  {error && (
+                    <div className="mb-6 p-3 bg-rose-50 border border-rose-100 text-rose-600 text-xs font-bold rounded-xl animate-in fade-in">
+                      {error}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleLogin} className="space-y-4">
+                    <div className="relative group">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300 group-focus-within:text-indigo-600 transition-colors" />
+                      <input 
+                        type="email" placeholder="Email Address" required
+                        className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-600/5 outline-none transition-all font-medium text-sm"
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                    </div>
+                    <div className="relative group">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300 group-focus-within:text-indigo-600 transition-colors" />
+                      <input 
+                        type="password" placeholder="Password" required
+                        className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-600/5 outline-none transition-all font-medium text-sm"
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                    </div>
+                    <button 
+                      disabled={loading}
+                      className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200 flex items-center justify-center gap-3 active:scale-95"
+                    >
+                      {loading ? <Loader2 className="animate-spin" size={20} /> : "Sign In"}
+                    </button>
+                  </form>
+
+                  <div className="relative my-8">
+                    <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-100"></span></div>
+                    <div className="relative flex justify-center text-[10px] uppercase font-black tracking-widest text-slate-400">
+                      <span className="bg-white px-4">Social Access</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <button onClick={() => handleSocialLogin('google')} className="flex items-center justify-center gap-2 py-3 border border-slate-100 rounded-xl hover:bg-slate-50 transition text-xs font-bold text-slate-600">
+                      <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-4 h-4" alt="Google" /> Google
+                    </button>
+                    <button onClick={() => handleSocialLogin('github')} className="flex items-center justify-center gap-2 py-3 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition text-xs font-bold">
+                      <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+                      GitHub
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* --- LOGGED IN VIEW: Welcome Message --- */
+            <div className="text-center py-12 space-y-8">
+               <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-indigo-50 rounded-full border border-indigo-100">
+                  <span className="w-2 h-2 bg-indigo-600 rounded-full animate-pulse" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600">Active Workspace</span>
+               </div>
+               <h1 className="text-5xl sm:text-8xl font-black text-slate-900 tracking-tighter leading-none">
+                  Hello, <span className="text-indigo-600 uppercase italic">{user?.email.split('@')[0]}</span>
+               </h1>
+               <p className="max-w-xl mx-auto text-slate-500 text-lg font-medium">
+                  Your professional journey continues. Browse new opportunities or manage your current applications.
+               </p>
+               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <button 
+                    onClick={() => navigate('/dashboard')}
+                    className="w-full sm:w-auto px-10 py-5 bg-slate-900 text-white rounded-2xl font-bold flex items-center justify-center gap-3 shadow-2xl hover:bg-indigo-600 transition-all active:scale-95"
+                  >
+                    <LayoutDashboard size={20} /> Go to Dashboard
+                  </button>
+                  <button 
+                    onClick={() => navigate('/jobs')}
+                    className="w-full sm:w-auto px-10 py-5 bg-white text-slate-900 border border-slate-200 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-slate-50 transition-all"
+                  >
+                    <Search size={20} /> Find Jobs
+                  </button>
+               </div>
+            </div>
+          )}
         </div>
       </section>
 
-      {/* 2. STATS BAR - Responsive Grid */}
+      {/* 2. STATS BAR */}
       <section className="max-w-6xl mx-auto px-6 pb-20 sm:pb-24">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-y-10 gap-x-4 py-8 sm:py-10 px-6 sm:px-10 bg-white rounded-3xl sm:rounded-[3rem] border border-slate-200 shadow-sm">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-y-10 gap-x-4 py-8 sm:py-12 px-6 sm:px-10 bg-white rounded-[2.5rem] border border-slate-200 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-amber-500" />
           <StatItem value="12k+" label="Live Positions" />
           <StatItem value="500+" label="Global Partners" />
-          <StatItem value="98%" label="Placement Rate" />
+          <StatItem value="98%" label="Success Rate" />
           <StatItem value="24h" label="Avg. Response" />
         </div>
       </section>
 
-      {/* 3. PATHWAYS - Responsive stacking */}
+      {/* 3. PATHWAYS */}
       <section className="max-w-6xl mx-auto px-6 pb-20 sm:pb-32">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-          
-          {/* Candidate Pathway */}
-          <div className="group bg-white p-8 sm:p-12 rounded-[2rem] sm:rounded-[3.5rem] border border-slate-200 hover:border-blue-400 transition-all shadow-sm flex flex-col items-start">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-blue-50 text-blue-600 rounded-xl sm:rounded-2xl flex items-center justify-center mb-8 sm:mb-10 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
-              <Users size={24} className="sm:w-7 sm:h-7" />
+          <div className="group bg-white p-8 sm:p-12 rounded-[3rem] border border-slate-200 hover:border-indigo-400 transition-all shadow-sm flex flex-col items-start relative overflow-hidden">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+              <Users size={28} />
             </div>
-            <h3 className="text-3xl sm:text-4xl font-black text-slate-900 mb-4 tracking-tight">I'm a Candidate</h3>
-            <p className="text-slate-500 font-medium mb-8 sm:mb-10 leading-relaxed text-sm sm:text-base">
-              Access exclusive roles from top-tier tech companies. Manage your 
-              pipeline with a professional, automated dashboard.
+            <h3 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">I'm a Candidate</h3>
+            <p className="text-slate-500 font-medium mb-10 leading-relaxed">
+              Manage your career with a professional pipeline and access roles from top-tier tech companies.
             </p>
-            <button onClick={() => navigate('/jobs')} className="flex items-center gap-3 text-blue-600 font-black text-[10px] sm:text-[11px] uppercase tracking-[0.2em] group-hover:gap-5 transition-all">
-              Start Applying <ArrowRight size={18} />
+            <button onClick={() => navigate('/jobs')} className="flex items-center gap-3 text-indigo-600 font-black text-[11px] uppercase tracking-widest hover:gap-5 transition-all">
+              Browse Openings <ArrowRight size={18} />
             </button>
           </div>
 
-          {/* Recruiter Pathway */}
-          <div className="group bg-slate-900 p-8 sm:p-12 rounded-[2rem] sm:rounded-[3.5rem] transition-all shadow-2xl flex flex-col items-start">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white/10 text-blue-400 rounded-xl sm:rounded-2xl flex items-center justify-center mb-8 sm:mb-10">
-              <Building2 size={24} className="sm:w-7 sm:h-7" />
+          <div className="group bg-slate-900 p-8 sm:p-12 rounded-[3rem] transition-all shadow-2xl flex flex-col items-start relative overflow-hidden">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/10 text-indigo-400 rounded-2xl flex items-center justify-center mb-8">
+              <Building2 size={28} />
             </div>
-            <h3 className="text-3xl sm:text-4xl font-black text-white mb-4 tracking-tight">I'm a Recruiter</h3>
-            <p className="text-slate-400 font-medium mb-8 sm:mb-10 leading-relaxed text-sm sm:text-base">
-              Reach the world’s best talent. Post opportunities, track candidates, 
-              and build your dream team with powerful analytics.
+            <h3 className="text-3xl font-black text-white mb-4 tracking-tight">I'm a Recruiter</h3>
+            <p className="text-slate-400 font-medium mb-10 leading-relaxed">
+              Post opportunities, track top talent, and build your dream team with advanced analytics.
             </p>
-            <button onClick={() => navigate('/post-job')} className="flex items-center gap-3 text-white font-black text-[10px] sm:text-[11px] uppercase tracking-[0.2em] hover:text-blue-400 transition-all">
+            <button onClick={() => navigate('/post-job')} className="flex items-center gap-3 text-white font-black text-[11px] uppercase tracking-widest hover:text-indigo-400 transition-all">
               Post Opportunity <ArrowRight size={18} />
             </button>
           </div>
-
         </div>
       </section>
 
-      {/* 4. VALUES SECTION - Responsive Grid */}
-      <section className="bg-slate-50 py-20 sm:py-28 border-y border-slate-200">
-        <div className="max-w-6xl mx-auto px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 sm:gap-16">
-            <ValueCard icon={<Zap className="text-blue-600 w-6 h-6 sm:w-7 sm:h-7" />} title="Real-time Tracking" desc="Get notified the second your status changes." />
-            <ValueCard icon={<Globe className="text-blue-600 w-6 h-6 sm:w-7 sm:h-7" />} title="Global Infrastructure" desc="Access roles from remote-first companies." />
-            <ValueCard icon={<ShieldCheck className="text-blue-600 w-6 h-6 sm:w-7 sm:h-7" />} title="Verified Quality" desc="Strict vetting for both jobs and talent." />
+      {/* 4. FINAL CTA (Only show if logged out) */}
+      {!isAuthenticated && (
+        <section className="py-20 sm:py-32 px-6 text-center">
+          <div className="max-w-4xl mx-auto bg-indigo-600 p-12 sm:p-24 rounded-[4rem] text-white shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-[80px] rounded-full" />
+            <h2 className="text-4xl sm:text-6xl font-black mb-10 tracking-tighter leading-tight">Ready to evolve <br /> your career?</h2>
+            <button 
+              onClick={() => navigate('/signup')}
+              className="px-12 py-5 bg-white text-indigo-600 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-slate-50 transition-all shadow-xl active:scale-95"
+            >
+              Get Started for Free
+            </button>
           </div>
-        </div>
-      </section>
-
-      {/* 5. FINAL CALL TO ACTION - Mobile Spacing Fix */}
-      <section className="py-20 sm:py-32 px-6 text-center">
-        <div className="max-w-4xl mx-auto bg-slate-900 p-10 sm:p-24 rounded-[2.5rem] sm:rounded-[4rem] text-white shadow-2xl relative overflow-hidden">
-          {/* Subtle Glow inside CTA */}
-          <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-600/20 blur-[100px] rounded-full pointer-events-none" />
-          
-          <h2 className="text-3xl sm:text-5xl md:text-6xl font-black mb-8 sm:mb-10 tracking-tighter leading-tight">
-            Ready for the <br className="hidden sm:block" /> next level?
-          </h2>
-          <button 
-            onClick={() => navigate('/signup')}
-            className="w-full sm:w-auto px-12 py-4 sm:py-5 bg-blue-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-blue-700 transition-all shadow-xl active:scale-95"
-          >
-            Get Started Now
-          </button>
-        </div>
-      </section>
-
+        </section>
+      )}
     </div>
   );
 };
 
-// HELPER COMPONENTS
 const StatItem = ({ value, label }) => (
   <div className="flex flex-col items-center gap-1 text-center">
-    <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tighter">{value}</span>
-    <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
-  </div>
-);
-
-const ValueCard = ({ icon, title, desc }) => (
-  <div className="flex flex-col items-start text-left group">
-    <div className="mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
-      {icon}
-    </div>
-    <h4 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-widest mb-2 sm:mb-3">
-      {title}
-    </h4>
-    <p className="text-slate-500 text-xs sm:text-sm font-medium leading-relaxed">
-      {desc}
-    </p>
+    <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tighter">{value}</span>
+    <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{label}</span>
   </div>
 );
 
