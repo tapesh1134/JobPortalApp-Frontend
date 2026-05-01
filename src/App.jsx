@@ -25,6 +25,8 @@ import Subscription from './pages/Subscription';
 import Billing from './pages/Billing';
 import NotificationsPage from './pages/NotificationsPage';
 import AdminDashboard from './pages/AdminDashboard'; // Added
+import Footer from './components/Footer';
+import ScrollToTop from './components/ScrollToTop';
 
 function App() {
   const dispatch = useDispatch();
@@ -65,6 +67,7 @@ function App() {
 
   return (
     <>
+      <ScrollToTop/>
       <Navbar />
       <div className="pt-16">
         <Routes>
@@ -122,6 +125,7 @@ function App() {
           <Route path="/job/:jobId/applicants" element={<JobApplicants />} />
           <Route path="/notifications" element={<NotificationsPage />} />
         </Routes>
+        <Footer/>
       </div>
     </>
   );
