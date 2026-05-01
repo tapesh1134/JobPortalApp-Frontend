@@ -90,8 +90,6 @@ const authSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-
-            // ✅ LOGIN
             .addCase(loginUser.pending, (state) => {
                 state.loading = true;
             })
@@ -105,8 +103,6 @@ const authSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload;
             })
-
-            // ✅ FETCH CURRENT USER (VERY IMPORTANT for OAuth)
             .addCase(fetchCurrentUser.pending, (state) => {
                 state.loading = true;
             })
@@ -120,8 +116,6 @@ const authSlice = createSlice({
                 state.isAuthenticated = false;
                 state.user = null;
             })
-
-            // ✅ UPDATE ROLE
             .addCase(updateUserRole.fulfilled, (state, action) => {
                 if (state.user) {
                     state.user.role = action.payload;
@@ -129,8 +123,6 @@ const authSlice = createSlice({
                 state.selectedRole = null;
                 localStorage.removeItem("selectedRole");
             })
-
-            // ✅ SIGNUP (already done)
             .addCase(signupUser.pending, (state) => {
                 state.loading = true;
             })
@@ -142,8 +134,6 @@ const authSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload;
             })
-
-            // ✅ LOGOUT
             .addCase(logoutUser.fulfilled, (state) => {
                 state.user = null;
                 state.isAuthenticated = false;
