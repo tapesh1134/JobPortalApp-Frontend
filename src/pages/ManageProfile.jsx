@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import { updateProfile } from '../redux/profileSlice';
+import { forgotPassword, resetPassword } from '../redux/authSlice'; // Import these
 import {
-  fetchMySubscriptions, fetchInvoices, renewSubscription
+  fetchMySubscriptions, fetchInvoices
 } from '../redux/subscriptionSlice';
 import {
   User, MapPin, Briefcase, Globe, Phone, Mail,
   Calendar, Award, Building, Link as LinkIcon, Save, X, Edit3,
-  Crown, History, Eye, CheckCircle, Printer, CreditCard, Download, RefreshCw
+  Crown, History, Eye, CheckCircle, Printer, CreditCard, 
+  ShieldCheck, Lock, KeyRound, Send, Loader2, AlertCircle
 } from 'lucide-react';
 
 const ManageProfile = () => {
@@ -16,11 +19,17 @@ const ManageProfile = () => {
   const navigate = useNavigate();
 
   const { data: profile } = useSelector(state => state.profile);
+  const { user: authUser } = useSelector(state => state.auth); // Use auth email as source of truth
   const { active: subscriptions, invoices } = useSelector(state => state.subscription);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState(null);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+
+  // --- Password State ---
+  const [passwordStep, setPasswordStep] = useState(1);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordData, setPasswordData] = useState({ otp: '', newPassword: '', confirmPassword: '' });
 
   const isRecruiter = profile?.role === 'RECRUITER';
   const isAdmin = profile?.role === 'ADMIN';
@@ -45,13 +54,48 @@ const ManageProfile = () => {
     setIsEditing(false);
   };
 
+  // --- Password Handlers ---
+  const handleRequestOTP = async () => {
+    setIsChangingPassword(true);
+    const result = await dispatch(forgotPassword(authUser.email));
+    setIsChangingPassword(false);
+    if (forgotPassword.fulfilled.match(result)) {
+      toast.success("Verification code sent to email!");
+      setPasswordStep(2);
+    } else {
+      toast.error(result.payload || "Failed to send code");
+    }
+  };
+
+  const handleUpdatePassword = async (e) => {
+    e.preventDefault();
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      return toast.error("Passwords do not match");
+    }
+    setIsChangingPassword(true);
+    const result = await dispatch(resetPassword({ 
+      email: authUser.email, 
+      otp: passwordData.otp, 
+      newPassword: passwordData.newPassword 
+    }));
+    setIsChangingPassword(false);
+    
+    if (resetPassword.fulfilled.match(result)) {
+      toast.success("Password updated successfully!");
+      setPasswordStep(1);
+      setPasswordData({ otp: '', newPassword: '', confirmPassword: '' });
+    } else {
+      toast.error(result.payload);
+    }
+  };
+
   if (!profile || !editData) return <LoadingSpinner />;
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] pt-20 pb-20 px-4 sm:px-6 md:px-8 lg:px-12 font-sans antialiased text-slate-900 overflow-x-hidden">
+    <div className="min-h-screen bg-[#f8fafc] pt-15 pb-15 px-4 sm:px-6 md:px-8 lg:px-12 font-sans antialiased text-slate-900 overflow-x-hidden">
       <div className="max-w-6xl mx-auto">
 
-        {/* 1. TOP HEADER BAR - Fully Responsive */}
+        {/* 1. TOP HEADER BAR */}
         <div className="bg-white rounded-3xl sm:rounded-[2rem] p-5 sm:p-6 mb-6 shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-5 text-center sm:text-left">
             <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl relative shrink-0 ${activeSub ? 'bg-gradient-to-tr from-amber-400 to-orange-600 shadow-amber-100' : 'bg-slate-900'}`}>
@@ -71,12 +115,6 @@ const ManageProfile = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-            {isRecruiter && (
-              <button onClick={() => navigate('/billing')} className="w-full sm:w-auto px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-200 transition">
-                <CreditCard size={14} /> Billing
-              </button>
-            )}
-
             {isEditing ? (
               <div className="flex gap-2 w-full sm:w-auto">
                 <button onClick={() => setIsEditing(false)} className="flex-1 px-4 py-3 font-black text-[10px] uppercase text-slate-400 tracking-widest">Cancel</button>
@@ -93,51 +131,77 @@ const ManageProfile = () => {
         {/* 2. MAIN CONTENT GRID */}
         <div className={`grid grid-cols-1 ${isAdmin ? '' : 'lg:grid-cols-12'} gap-6`}>
 
-          {/* Left Column - Account Identity */}
+          {/* Left Column */}
           <div className={`${isAdmin ? 'max-w-xl mx-auto w-full' : 'lg:col-span-4'} space-y-6`}>
             <Section title="Account Identity" icon={<User size={16} />} color="blue">
               <InputField label="Full Name" icon={User} value={editData.fullName} name="fullName" isEditing={isEditing} onChange={setEditData} data={editData} />
               <InputField label="Email Address" icon={Mail} value={profile.email} name="email" isEditing={false} onChange={()=>{}} data={editData} />
-              
               {!isAdmin && (
-                <>
-                  <InputField label="Mobile No" icon={Phone} value={editData.mobile} name="mobile" type="number" isEditing={isEditing} onChange={setEditData} data={editData} />
-                  {!isRecruiter && (
-                    <>
-                      <InputField label="Birthday" icon={Calendar} value={editData.dob?.split('T')[0]} name="dob" type="date" isEditing={isEditing} onChange={setEditData} data={editData} />
-                      <div className="space-y-1.5">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5 ml-1"><Award size={12} /> Gender</label>
-                        {isEditing ? (
-                          <select className="w-full p-3 bg-slate-50 border-none rounded-xl text-xs font-bold shadow-inner" value={editData.gender} onChange={e => setEditData({ ...editData, gender: e.target.value })}>
-                            <option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option>
-                          </select>
-                        ) : <p className="text-xs font-black text-slate-700 py-1">{profile.gender || '—'}</p>}
-                      </div>
-                    </>
-                  )}
-                </>
+                <InputField label="Mobile No" icon={Phone} value={editData.mobile} name="mobile" type="number" isEditing={isEditing} onChange={setEditData} data={editData} />
               )}
             </Section>
 
-            {isRecruiter && !isAdmin && (
-              <Section title="Subscription" icon={<Crown size={16} />} color="amber">
-                {activeSub ? (
-                  <div className="space-y-4">
-                    <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100">
-                      <p className="text-[8px] font-black text-amber-600 uppercase mb-1">Status: Active</p>
-                      <p className="text-base font-black text-slate-900">{activeSub.plan}</p>
-                      <p className="text-[10px] font-bold text-slate-400 mt-1">Ends {new Date(activeSub.endDate).toLocaleDateString()}</p>
+            {/* SECURITY SECTION (Change Password) */}
+            <Section title="Security & Access" icon={<ShieldCheck size={16} />} color="rose">
+              {passwordStep === 1 ? (
+                <div className="space-y-4">
+                  <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                    To change your password, we need to verify your identity via email.
+                  </p>
+                  <button 
+                    onClick={handleRequestOTP}
+                    disabled={isChangingPassword}
+                    className="w-full py-3 bg-slate-100 text-slate-700 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-200 transition disabled:opacity-50"
+                  >
+                    {isChangingPassword ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                    Request Reset Code
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleUpdatePassword} className="space-y-4">
+                   <div className="p-3 bg-amber-50 rounded-xl border border-amber-100 flex gap-2">
+                        <AlertCircle className="text-amber-600 shrink-0" size={14} />
+                        <p className="text-[9px] text-amber-700 font-bold leading-tight">Check your email for the 6-digit code.</p>
+                   </div>
+                   <input
+                        type="text"
+                        placeholder="CODE"
+                        className="w-full p-3 bg-slate-50 border-none rounded-xl text-center font-black tracking-[0.3em] text-sm focus:ring-1 focus:ring-rose-500"
+                        value={passwordData.otp}
+                        onChange={(e) => setPasswordData({...passwordData, otp: e.target.value})}
+                        required
+                    />
+                    <div className="space-y-3">
+                        <input
+                            type="password"
+                            placeholder="New Password"
+                            className="w-full p-3 bg-slate-50 border-none rounded-xl text-xs font-bold focus:ring-1 focus:ring-rose-500"
+                            value={passwordData.newPassword}
+                            onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                            required
+                        />
+                        <input
+                            type="password"
+                            placeholder="Confirm Password"
+                            className="w-full p-3 bg-slate-50 border-none rounded-xl text-xs font-bold focus:ring-1 focus:ring-rose-500"
+                            value={passwordData.confirmPassword}
+                            onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                            required
+                        />
                     </div>
-                    <button onClick={() => navigate('/billing')} className="w-full py-3 bg-white text-slate-600 border border-slate-200 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-slate-50 transition">Manage Billing</button>
-                  </div>
-                ) : (
-                  <button onClick={() => navigate('/subscription')} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-100">Upgrade to Pro</button>
-                )}
-              </Section>
-            )}
+                    <div className="flex gap-2">
+                        <button type="button" onClick={() => setPasswordStep(1)} className="flex-1 py-3 text-[9px] font-black uppercase text-slate-400">Back</button>
+                        <button type="submit" disabled={isChangingPassword} className="flex-[2] py-3 bg-rose-600 text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg shadow-rose-100">
+                            {isChangingPassword ? <Loader2 size={14} className="animate-spin inline mr-1" /> : <CheckCircle size={14} className="inline mr-1" />}
+                            Update
+                        </button>
+                    </div>
+                </form>
+              )}
+            </Section>
           </div>
 
-          {/* Right Column - Address & Pro Details (Hidden for Admins) */}
+          {/* Right Column (Hidden for Admins) */}
           {!isAdmin && (
             <div className="lg:col-span-8 space-y-6">
               <Section title="Residency & Address" icon={<MapPin size={16} />} color="slate">
@@ -158,8 +222,6 @@ const ManageProfile = () => {
                     <>
                       <InputField label="Company Name" value={editData.companyName} name="companyName" isEditing={isEditing} onChange={setEditData} data={editData} icon={Building} />
                       <InputField label="Industry" value={editData.industry} name="industry" isEditing={isEditing} onChange={setEditData} data={editData} icon={Globe} />
-                      <InputField label="Company Size" value={editData.companySize} name="companySize" isEditing={isEditing} onChange={setEditData} data={editData} icon={User} />
-                      <InputField label="Official Website" value={editData.website} name="website" isEditing={isEditing} onChange={setEditData} data={editData} icon={LinkIcon} />
                     </>
                   ) : (
                     <>
@@ -174,54 +236,14 @@ const ManageProfile = () => {
                         )}
                       </div>
                       <InputField label="Experience (Years)" value={editData.experience} name="experience" type="number" isEditing={isEditing} onChange={setEditData} data={editData} icon={Briefcase} />
-                      <InputField label="Resume Link" value={editData.resumeUrl} name="resumeUrl" isEditing={isEditing} onChange={setEditData} data={editData} icon={LinkIcon} />
                     </>
                   )}
                 </div>
               </Section>
-
-              {isRecruiter && invoices?.length > 0 && (
-                <div className="bg-white p-6 sm:p-8 rounded-3xl sm:rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
-                  <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-[10px] font-black text-slate-900 flex items-center gap-2 uppercase tracking-widest"><History size={16} /> Recent Payments</h3>
-                    <button onClick={() => navigate('/billing')} className="text-[9px] font-black text-blue-600 uppercase border-b-2 border-blue-600 pb-0.5 whitespace-nowrap">View History</button>
-                  </div>
-                  <div className="space-y-3">
-                    {[...invoices].reverse().slice(0, 3).map(inv => (
-                      <div key={inv.invoiceID} onClick={() => setSelectedInvoice(inv)} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-blue-200 cursor-pointer transition group">
-                        <div className="flex items-center gap-4">
-                          <div className="p-2 bg-white rounded-lg text-emerald-500 shadow-sm group-hover:scale-110 transition-transform"><CheckCircle size={16} /></div>
-                          <div><p className="text-xs font-black text-slate-900">₹{inv.amount}</p><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{new Date(inv.paymentDate).toLocaleDateString()}</p></div>
-                        </div>
-                        <Eye size={16} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>
       </div>
-
-      {/* INVOICE MODAL - Same refined logic */}
-      {selectedInvoice && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-200">
-            <button onClick={() => setSelectedInvoice(null)} className="absolute top-6 right-6 p-2 text-slate-400 hover:bg-slate-100 rounded-full"><X size={20} /></button>
-            <div className="p-8 pb-6 border-b border-dashed border-slate-200 text-center sm:text-left">
-              <h2 className="text-xl font-black text-slate-900">Tax Invoice</h2>
-              <p className="text-slate-400 text-[9px] font-bold uppercase mt-1 tracking-widest">ID: #{selectedInvoice.invoiceID}</p>
-            </div>
-            <div className="p-8 space-y-6">
-              <div className="flex justify-between items-center"><span className="text-sm font-bold text-slate-500">Premium Plan</span><span className="text-lg font-black text-blue-600">₹{selectedInvoice.amount}</span></div>
-              <div className="flex gap-2">
-                <button onClick={() => window.print()} className="flex-1 py-3.5 bg-slate-900 text-white rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2"><Printer size={14} /> Print</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

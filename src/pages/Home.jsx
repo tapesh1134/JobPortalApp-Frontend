@@ -5,7 +5,8 @@ import { loginUser } from '../redux/authSlice';
 import { 
   Search, Users, ArrowRight, Building2, 
   Zap, Globe, ShieldCheck, Sparkles, 
-  Mail, Lock, Loader2, LayoutDashboard
+  Mail, Lock, Loader2, LayoutDashboard,
+  Eye, EyeOff // Added Icons
 } from 'lucide-react';
 
 const Home = () => {
@@ -13,9 +14,10 @@ const Home = () => {
   const dispatch = useDispatch();
   const { isAuthenticated, user, loading, error } = useSelector((state) => state.auth);
 
-  // Local state for the integrated login form
+  // Local state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // Added state
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -29,13 +31,12 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-[#f8fafc] overflow-x-hidden">
       
-      {/* 1. HERO SECTION - Conditional Rendering */}
-      <section className="relative pt-20 sm:pt-32 pb-16 sm:pb-24 px-6">
+      {/* 1. HERO SECTION */}
+      <section className="relative pt-20 sm:pt-15 pb-16 sm:pb-15 px-6">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-50/50 via-transparent to-transparent -z-10" />
         
         <div className="max-w-7xl mx-auto">
           {!isAuthenticated ? (
-            /* --- LOGGED OUT VIEW: Split Hero with Login Form --- */
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
               <div className="lg:col-span-7 space-y-8 text-center lg:text-left">
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white rounded-full shadow-sm border border-slate-200">
@@ -56,70 +57,118 @@ const Home = () => {
                 </div>
               </div>
 
+              {/* LOGIN CARD - MATCHED TO SIGNUP UI */}
               <div className="lg:col-span-5">
-                <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/50 p-8 sm:p-10 border border-slate-100">
-                  <h2 className="text-2xl font-black text-slate-900 mb-2">Welcome Back</h2>
-                  <p className="text-slate-400 text-sm font-medium mb-8">Login to your professional portal</p>
+                <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/60 p-8 sm:p-10 border border-slate-100">
+                  <div className="mb-8">
+                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Welcome Back</h2>
+                    <p className="text-slate-500 font-medium mt-1">Login to your professional portal</p>
+                  </div>
                   
                   {error && (
-                    <div className="mb-6 p-3 bg-rose-50 border border-rose-100 text-rose-600 text-xs font-bold rounded-xl animate-in fade-in">
-                      {error}
+                    <div className="mb-6 p-4 bg-rose-50 border border-rose-100 text-rose-600 text-xs font-bold rounded-2xl animate-in fade-in">
+                      <div className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-rose-500 rounded-full" />
+                        {error}
+                      </div>
                     </div>
                   )}
 
-                  <form onSubmit={handleLogin} className="space-y-4">
-                    <div className="relative group">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300 group-focus-within:text-indigo-600 transition-colors" />
-                      <input 
-                        type="email" placeholder="Email Address" required
-                        className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-600/5 outline-none transition-all font-medium text-sm"
-                        onChange={(e) => setEmail(e.target.value)}
-                      />
+                  <form onSubmit={handleLogin} className="space-y-5">
+                    {/* Email Input */}
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
+                      <div className="relative group">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300 group-focus-within:text-indigo-600 transition-colors" />
+                        <input 
+                          type="email" 
+                          required
+                          className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-600/5 focus:bg-white focus:border-indigo-600/20 outline-none transition-all font-medium"
+                          placeholder="name@company.com"
+                          onChange={(e) => setEmail(e.target.value)}
+                        />
+                      </div>
                     </div>
-                    <div className="relative group">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300 group-focus-within:text-indigo-600 transition-colors" />
-                      <input 
-                        type="password" placeholder="Password" required
-                        className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-600/5 outline-none transition-all font-medium text-sm"
-                        onChange={(e) => setPassword(e.target.value)}
-                      />
+
+                    {/* Password Input */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-end mb-1">
+                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Password</label>
+                        <Link to="/forgot-password" title="reset" className="text-[11px] font-bold text-indigo-600 hover:underline">Forgot Password?</Link>
+                      </div>
+                      <div className="relative group">
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300 group-focus-within:text-indigo-600 transition-colors" />
+                        <input 
+                          type={showPassword ? "text" : "password"}
+                          required
+                          className="w-full pl-12 pr-12 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-600/5 focus:bg-white focus:border-indigo-600/20 outline-none transition-all font-medium"
+                          placeholder="Enter your password"
+                          onChange={(e) => setPassword(e.target.value)}
+                        />
+                        <button 
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors"
+                        >
+                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                      </div>
                     </div>
+
                     <button 
                       disabled={loading}
-                      className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200 flex items-center justify-center gap-3 active:scale-95"
+                      className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200 flex items-center justify-center gap-3 group active:scale-[0.98] disabled:opacity-70"
                     >
-                      {loading ? <Loader2 className="animate-spin" size={20} /> : "Sign In"}
+                      {loading ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <>
+                          <span>Sign In</span>
+                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        </>
+                      )}
                     </button>
                   </form>
 
-                  <div className="relative my-8">
+                  <div className="relative my-10">
                     <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-100"></span></div>
-                    <div className="relative flex justify-center text-[10px] uppercase font-black tracking-widest text-slate-400">
-                      <span className="bg-white px-4">Social Access</span>
+                    <div className="relative flex justify-center text-[10px] font-black uppercase tracking-[0.2em]">
+                      <span className="bg-white px-4 text-slate-400">Social Access</span>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <button onClick={() => handleSocialLogin('google')} className="flex items-center justify-center gap-2 py-3 border border-slate-100 rounded-xl hover:bg-slate-50 transition text-xs font-bold text-slate-600">
+                  <div className="grid grid-cols-2 gap-4">
+                    <button 
+                      onClick={() => handleSocialLogin('google')} 
+                      className="flex items-center justify-center gap-3 py-3 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all font-bold text-slate-700 text-xs shadow-sm active:scale-95"
+                    >
                       <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-4 h-4" alt="Google" /> Google
                     </button>
-                    <button onClick={() => handleSocialLogin('github')} className="flex items-center justify-center gap-2 py-3 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition text-xs font-bold">
+                    <button 
+                      onClick={() => handleSocialLogin('github')} 
+                      className="flex items-center justify-center gap-3 py-3 bg-slate-900 text-white rounded-2xl hover:bg-slate-800 transition-all font-bold text-xs shadow-xl active:scale-95"
+                    >
                       <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
                       GitHub
                     </button>
                   </div>
+
+                  <p className="text-center text-slate-500 mt-10 text-sm font-medium">
+                    New to the portal?{' '}
+                    <Link to="/signup" className="text-indigo-600 font-bold hover:underline">Create Account</Link>
+                  </p>
                 </div>
               </div>
             </div>
           ) : (
-            /* --- LOGGED IN VIEW: Welcome Message --- */
+            /* --- LOGGED IN VIEW --- */
             <div className="text-center py-12 space-y-8">
                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-indigo-50 rounded-full border border-indigo-100">
                   <span className="w-2 h-2 bg-indigo-600 rounded-full animate-pulse" />
                   <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600">Active Workspace</span>
                </div>
                <h1 className="text-5xl sm:text-8xl font-black text-slate-900 tracking-tighter leading-none">
-                  Hello, <span className="text-indigo-600 uppercase italic">{user?.email.split('@')[0]}</span>
+                  Hello, <span className="text-indigo-600 uppercase italic">{user?.email?.split('@')[0]}</span>
                </h1>
                <p className="max-w-xl mx-auto text-slate-500 text-lg font-medium">
                   Your professional journey continues. Browse new opportunities or manage your current applications.
@@ -185,7 +234,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* 4. FINAL CTA (Only show if logged out) */}
+      {/* 4. FINAL CTA */}
       {!isAuthenticated && (
         <section className="py-20 sm:py-32 px-6 text-center">
           <div className="max-w-4xl mx-auto bg-indigo-600 p-12 sm:p-24 rounded-[4rem] text-white shadow-2xl relative overflow-hidden">

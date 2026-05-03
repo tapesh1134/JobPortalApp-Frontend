@@ -41,7 +41,7 @@ const BrowseJobs = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50/50 pt-24 pb-20 px-4 lg:px-8">
+        <div className="min-h-screen bg-slate-50/50 pt-15 pb-15 px-4 lg:px-8">
             <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
 
                 {/* Sidebar Filter - Desktop & Mobile Overlay */}

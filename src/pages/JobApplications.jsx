@@ -63,7 +63,7 @@ const JobApplications = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pt-24 px-4">
+    <div className="min-h-screen bg-slate-50 pt-15 px-4">
       <div className="max-w-5xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">
           <div>

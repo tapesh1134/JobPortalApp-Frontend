@@ -37,7 +37,7 @@ const PostJob = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] pt-28 pb-20 px-4">
+        <div className="min-h-screen bg-[#f8fafc] pt-15 pb-15 px-4">
             <div className="max-w-4xl mx-auto">
                 
                 {/* BACK BUTTON & HEADER */}

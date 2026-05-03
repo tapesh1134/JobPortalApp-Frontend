@@ -72,7 +72,7 @@ const JobApplicants = () => {
     const filterOptions = ['ALL', 'APPLIED', 'SHORTLISTED', 'INTERVIEW_SCHEDULED', 'OFFERED', 'REJECTED'];
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] pt-24 pb-12 px-4">
+        <div className="min-h-screen bg-[#f8fafc] pt-15 pb-15 px-4">
             <div className="max-w-6xl mx-auto">
 
                 {/* HEADER SECTION */}

@@ -67,6 +67,26 @@ export const logoutUser = createAsyncThunk('auth/logout', async (_, thunkAPI) =>
     }
 });
 
+export const forgotPassword = createAsyncThunk('auth/forgotPassword', async (email, thunkAPI) => {
+    try {
+        const response = await api.post(`/auth/forgot-password?email=${email}`);
+        return response.data;
+    } catch (error) {
+        return thunkAPI.rejectWithValue(error.response?.data?.message || 'Failed to send OTP');
+    }
+});
+
+export const resetPassword = createAsyncThunk('auth/resetPassword', async ({ email, otp, newPassword }, thunkAPI) => {
+    try {
+        const response = await api.post(`/auth/reset-password`, null, {
+            params: { email, otp, newPassword }
+        });
+        return response.data;
+    } catch (error) {
+        return thunkAPI.rejectWithValue(error.response?.data?.message || 'Failed to reset password');
+    }
+});
+
 
 const authSlice = createSlice({
     name: 'auth',

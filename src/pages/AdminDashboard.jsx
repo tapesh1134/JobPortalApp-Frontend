@@ -65,7 +65,7 @@ const AdminDashboard = () => {
     }, [allProfiles, roleFilter, searchQuery]);
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] pt-20 pb-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen bg-[#f8fafc] pt-15 pb-15 px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto">
                 
                 {/* HEADER */}

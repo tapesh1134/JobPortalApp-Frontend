@@ -33,7 +33,7 @@ const NotificationsPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] pt-24 pb-20 px-4">
+        <div className="min-h-screen bg-[#f8fafc] pt-15 pb-15 px-4">
             <div className="max-w-3xl mx-auto">
                 
                 {/* HEADER SECTION */}

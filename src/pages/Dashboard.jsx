@@ -82,7 +82,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] pt-16 pb-20 px-4 md:px-8 lg:px-16 antialiased text-slate-900">
+    <div className="min-h-screen bg-[#f8fafc] pt-15 pb-15 px-4 md:px-8 lg:px-16 antialiased text-slate-900">
       <div className="max-w-7xl mx-auto">
         
         {/* HEADER SECTION */}

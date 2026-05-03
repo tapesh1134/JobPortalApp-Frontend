@@ -31,7 +31,7 @@ const ApplyJob = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pt-24 pb-12 px-4">
+    <div className="min-h-screen bg-slate-50 pt-15 pb-15 px-4">
       <div className="max-w-2xl mx-auto bg-white rounded-3xl shadow-sm border border-slate-200 p-8">
         <header className="mb-8">
           <h1 className="text-2xl font-bold text-slate-900">Apply for {job?.title}</h1>
