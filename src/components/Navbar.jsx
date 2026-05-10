@@ -16,7 +16,7 @@ const Navbar = () => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const { active: subscriptions } = useSelector((state) => state.subscription);
   const { items: notifications, unreadCount } = useSelector((state) => state.notifications);
-  
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -35,12 +35,12 @@ const Navbar = () => {
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
-    
+
     if (isAuthenticated) {
       if (isRecruiter) dispatch(fetchMySubscriptions());
       dispatch(fetchNotifications());
     }
-    
+
     return () => window.removeEventListener("scroll", handleScroll);
   }, [dispatch, isAuthenticated, isRecruiter]);
 
@@ -93,16 +93,15 @@ const Navbar = () => {
 
   return (
     <>
-      <header 
-        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
-          isScrolled 
-          ? 'bg-white/90 backdrop-blur-md border-b border-slate-200 py-2 shadow-sm' 
+      <header
+        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${isScrolled
+          ? 'bg-white/90 backdrop-blur-md border-b border-slate-200 py-2 shadow-sm'
           : 'bg-white py-4'
-        }`}
+          }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-12">
-            
+
             {/* BRAND SECTION */}
             <div className="flex items-center gap-8">
               <Link to="/" className="flex items-center gap-2.5 group shrink-0">
@@ -114,31 +113,25 @@ const Navbar = () => {
                 </span>
               </Link>
 
-              {/* DESKTOP NAV */}
-              {isAuthenticated && (
-                <nav className="hidden lg:flex items-center gap-1">
-                  <NavTab to="/dashboard" label="Dashboard" icon={<LayoutDashboard size={18} />} />
-                  <NavTab to="/jobs" label="Browse" icon={<Search size={18} />} />
-                  {isRecruiter && <NavTab to="/post-job" label="Post Job" icon={<Plus size={18} />} />}
-                  <a 
-                    href={DOCS_URL} 
-                    target="_blank" 
-                    rel="noreferrer" 
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors"
-                  >
-                    <FileCode size={18} /> Docs
-                  </a>
-                </nav>
-              )}
+              <nav className="hidden lg:flex items-center gap-1">
+                <NavTab to="/jobs" label="Browse" icon={<Search size={18} />} />
+                {isAuthenticated && (
+                  <>
+                    <NavTab to="/dashboard" label="Dashboard" icon={<LayoutDashboard size={18} />} />
+                    {isRecruiter && (
+                      <NavTab to="/post-job" label="Post Job" icon={<Plus size={18} />} />
+                    )}
+                  </>
+                )}
+                <a href={DOCS_URL} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors"><FileCode size={18} /> Docs</a>
+              </nav>
             </div>
 
-            {/* ACTIONS SECTION */}
             <div className="flex items-center gap-2 sm:gap-3">
               {isAuthenticated ? (
                 <>
-                  {/* RECRUITER UPGRADE NUDGE */}
                   {isRecruiter && !hasActiveSubscription && (
-                    <button 
+                    <button
                       onClick={() => navigate('/subscription')}
                       className="hidden md:flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-bold hover:bg-amber-100 transition-all active:scale-95"
                     >
@@ -146,14 +139,12 @@ const Navbar = () => {
                     </button>
                   )}
 
-                  {/* NOTIFICATIONS */}
                   <div className="relative">
-                    <button 
+                    <button
                       aria-label="Notifications"
                       onClick={() => { setShowNotifDropdown(!showNotifDropdown); setShowUserDropdown(false); }}
-                      className={`p-2.5 rounded-2xl transition-all relative ${
-                        showNotifDropdown ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:bg-slate-100'
-                      }`}
+                      className={`p-2.5 rounded-2xl transition-all relative ${showNotifDropdown ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:bg-slate-100'
+                        }`}
                     >
                       <Bell size={22} />
                       {unreadCount > 0 && (
@@ -172,9 +163,9 @@ const Navbar = () => {
                             <div className="p-10 text-center text-slate-400 text-sm italic">No new notifications</div>
                           ) : (
                             notifications.slice(0, 5).map(n => (
-                              <div 
-                                key={n.notificationId} 
-                                onClick={() => { if (!n.read) dispatch(markAsRead(n.notificationId)); navigate('/notifications'); }} 
+                              <div
+                                key={n.notificationId}
+                                onClick={() => { if (!n.read) dispatch(markAsRead(n.notificationId)); navigate('/notifications'); }}
                                 className={`px-5 py-4 border-b border-slate-50 cursor-pointer hover:bg-slate-50 transition-colors flex gap-3 ${!n.read ? 'bg-indigo-50/30' : ''}`}
                               >
                                 <div className={`w-1.5 h-1.5 rounded-full mt-2 shrink-0 ${!n.read ? 'bg-indigo-600' : 'bg-slate-200'}`} />
@@ -191,7 +182,7 @@ const Navbar = () => {
 
                   {/* USER MENU */}
                   <div className="relative">
-                    <button 
+                    <button
                       onClick={() => { setShowUserDropdown(!showUserDropdown); setShowNotifDropdown(false); }}
                       className="flex items-center gap-2 p-1 pr-3 rounded-2xl border border-slate-200 hover:bg-slate-50 transition-all active:scale-95"
                     >
@@ -210,8 +201,8 @@ const Navbar = () => {
                         <DropdownItem to="/manage-profile" icon={<User size={18} />} label="My Profile" />
                         {isRecruiter && <DropdownItem to="/subscription" icon={<Zap size={18} />} label="Subscription" />}
                         <hr className="my-2 border-slate-50" />
-                        <button 
-                          onClick={() => dispatch(logoutUser()).then(() => navigate('/'))} 
+                        <button
+                          onClick={() => dispatch(logoutUser()).then(() => navigate('/'))}
                           className="w-full flex items-center gap-3 px-5 py-2.5 text-sm text-rose-600 hover:bg-rose-50 transition-colors font-bold"
                         >
                           <LogOut size={18} /> Logout
@@ -230,9 +221,9 @@ const Navbar = () => {
               )}
 
               {/* MOBILE MENU TOGGLE */}
-              <button 
+              <button
                 aria-label="Toggle Menu"
-                onClick={() => { setIsMenuOpen(!isMenuOpen); setShowNotifDropdown(false); setShowUserDropdown(false); }} 
+                onClick={() => { setIsMenuOpen(!isMenuOpen); setShowNotifDropdown(false); setShowUserDropdown(false); }}
                 className="lg:hidden p-2 text-slate-600 bg-slate-50 rounded-xl hover:bg-slate-100"
               >
                 {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -245,18 +236,18 @@ const Navbar = () => {
         {isMenuOpen && (
           <div className="lg:hidden absolute top-full left-0 w-full bg-white border-b border-slate-200 shadow-2xl animate-in slide-in-from-top-2 duration-300">
             <nav className="p-5 space-y-2">
+              <MobileNavLink to="/jobs" icon={<Search size={20} />} label="Browse Jobs" />
               {isAuthenticated ? (
                 <>
                   <MobileNavLink to="/dashboard" icon={<LayoutDashboard size={20} />} label="Dashboard" />
-                  <MobileNavLink to="/jobs" icon={<Search size={20} />} label="Browse Jobs" />
                   {isRecruiter && <MobileNavLink to="/post-job" icon={<Plus size={20} />} label="Post a Job" />}
+                  <button onClick={() => dispatch(logoutUser())} className="w-full flex items-center gap-3 p-4 text-rose-600 font-bold bg-rose-50 rounded-2xl">
+                    <LogOut size={20} /> Logout
+                  </button>
                   <a href={DOCS_URL} className="flex items-center justify-between p-4 text-slate-600 font-bold bg-slate-50 rounded-2xl">
                     <div className="flex items-center gap-3"><FileCode size={20} /> API Docs</div>
                     <ExternalLink size={16} className="text-slate-400" />
                   </a>
-                  <button onClick={() => dispatch(logoutUser())} className="w-full flex items-center gap-3 p-4 text-rose-600 font-bold bg-rose-50 rounded-2xl">
-                    <LogOut size={20} /> Logout
-                  </button>
                 </>
               ) : (
                 <div className="grid grid-cols-2 gap-4 pt-2">
@@ -271,9 +262,9 @@ const Navbar = () => {
 
       {/* CLICK-OUTSIDE BACKDROP */}
       {(showNotifDropdown || showUserDropdown || isMenuOpen) && (
-        <div 
-          className="fixed inset-0 z-[90] bg-slate-900/5 backdrop-blur-[1px]" 
-          onClick={closeAllMenus} 
+        <div
+          className="fixed inset-0 z-[90] bg-slate-900/5 backdrop-blur-[1px]"
+          onClick={closeAllMenus}
         />
       )}
     </>
@@ -282,11 +273,10 @@ const Navbar = () => {
 
 // HELPER COMPONENTS
 const NavTab = ({ to, label, icon }) => (
-  <NavLink 
-    to={to} 
-    className={({ isActive }) => `flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-      isActive ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-    }`}
+  <NavLink
+    to={to}
+    className={({ isActive }) => `flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${isActive ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+      }`}
   >
     {icon} {label}
   </NavLink>
