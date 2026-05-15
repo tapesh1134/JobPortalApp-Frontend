@@ -25,7 +25,7 @@ const Home = () => {
   };
 
   const handleSocialLogin = (provider) => {
-    window.location.href = `http://localhost:8080/api/auth/oauth2/authorization/${provider}`;
+    window.location.href = `/oauth2/api/auth/oauth2/authorization/${provider}`;
   };
 
   return (

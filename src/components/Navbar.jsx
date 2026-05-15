@@ -29,7 +29,7 @@ const Navbar = () => {
 
   const isRecruiter = user?.role === 'RECRUITER';
   const hasActiveSubscription = subscriptions?.some(sub => sub.status === 'SUBSCRIBED');
-  const DOCS_URL = "http://localhost:8080/webjars/swagger-ui/index.html";
+  const DOCS_URL = `/webjars/swagger-ui/index.html`;
 
   // 1. Initial Data Fetch & Scroll Listener
   useEffect(() => {
@@ -48,7 +48,7 @@ const Navbar = () => {
   useEffect(() => {
     if (!isAuthenticated || !user?.email) return;
 
-    const socket = new SockJS("http://localhost:8080/api/notifications/ws-notifications");
+    const socket = new SockJS(`/web-socket/api/notifications/ws-notifications`);
     const client = new Client({
       webSocketFactory: () => socket,
       reconnectDelay: 5000,
