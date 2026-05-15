@@ -5,16 +5,16 @@ import { Link, useNavigate } from 'react-router-dom';
 import { User, Briefcase, Mail, Lock, Sparkles, Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
 
 const Signup = () => {
-  const [formData, setFormData] = useState({ 
-    email: '', 
-    password: '', 
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
     confirmPassword: '', // Added confirmPassword
-    role: 'CANDIDATE' 
+    role: 'CANDIDATE'
   });
-  
+
   const [showPassword, setShowPassword] = useState(false); // Toggle state
   const [localError, setLocalError] = useState(''); // Local validation error
-  
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, error: reduxError } = useSelector((state) => state.auth);
@@ -39,7 +39,7 @@ const Signup = () => {
       password: formData.password,
       role: formData.role
     }));
-    
+
     if (signupUser.fulfilled.match(result)) {
       navigate('/login');
     }
@@ -58,7 +58,7 @@ const Signup = () => {
 
       <div className="max-w-[480px] w-full">
         <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/60 p-8 sm:p-10 border border-slate-100">
-          
+
           <div className="text-center mb-10">
             <div className="inline-flex items-center justify-center w-12 h-12 bg-indigo-600 rounded-2xl mb-6 shadow-lg shadow-indigo-100">
               <Sparkles className="text-white w-6 h-6" />
@@ -84,11 +84,10 @@ const Signup = () => {
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, role: 'CANDIDATE' })}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${
-                    formData.role === 'CANDIDATE' 
-                    ? 'border-indigo-600 bg-indigo-50 text-indigo-600 shadow-md shadow-indigo-100' 
-                    : 'border-slate-50 bg-slate-50 text-slate-400 hover:border-slate-200'
-                  }`}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${formData.role === 'CANDIDATE'
+                      ? 'border-indigo-600 bg-indigo-50 text-indigo-600 shadow-md shadow-indigo-100'
+                      : 'border-slate-50 bg-slate-50 text-slate-400 hover:border-slate-200'
+                    }`}
                 >
                   <User className="w-5 h-5" />
                   <span className="text-xs font-bold uppercase tracking-tighter">Candidate</span>
@@ -96,11 +95,10 @@ const Signup = () => {
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, role: 'RECRUITER' })}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${
-                    formData.role === 'RECRUITER' 
-                    ? 'border-indigo-600 bg-indigo-50 text-indigo-600 shadow-md shadow-indigo-100' 
-                    : 'border-slate-50 bg-slate-50 text-slate-400 hover:border-slate-200'
-                  }`}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${formData.role === 'RECRUITER'
+                      ? 'border-indigo-600 bg-indigo-50 text-indigo-600 shadow-md shadow-indigo-100'
+                      : 'border-slate-50 bg-slate-50 text-slate-400 hover:border-slate-200'
+                    }`}
                 >
                   <Briefcase className="w-5 h-5" />
                   <span className="text-xs font-bold uppercase tracking-tighter">Recruiter</span>
@@ -135,7 +133,7 @@ const Signup = () => {
                   placeholder="Create strong password"
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 />
-                <button 
+                <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors"
@@ -181,7 +179,7 @@ const Signup = () => {
             <div className="relative flex justify-center text-[10px] font-black uppercase tracking-[0.2em]"><span className="bg-white px-4 text-slate-400">Join via Social</span></div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* <div className="grid grid-cols-2 gap-4">
             <button 
               onClick={() => handleSocialSignup('google')}
               className="flex items-center justify-center gap-3 py-3 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all font-bold text-slate-700 text-xs shadow-sm active:scale-95"
@@ -198,6 +196,40 @@ const Signup = () => {
               </svg>
               GitHub
             </button>
+          </div> */}
+
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              onClick={() => handleSocialLogin('google')}
+              disabled
+              title="OAuth does not work on non-secure domains (HTTP). Use localhost or HTTPS."
+              className="flex items-center justify-center gap-3 py-3 border border-slate-200 rounded-2xl bg-slate-100 cursor-not-allowed font-bold text-slate-500 text-xs shadow-sm"
+            >
+              <img
+                src="https://www.svgrepo.com/show/475656/google-color.svg"
+                className="w-4 h-4"
+                alt="Google"
+              />
+              Google
+            </button>
+
+            <button
+              onClick={() => handleSocialLogin('github')}
+              disabled
+              title="OAuth does not work on non-secure domains (HTTP). Use localhost or HTTPS."
+              className="flex items-center justify-center gap-3 py-3 bg-slate-900 text-white rounded-2xl hover:bg-slate-800 transition-all font-bold text-xs shadow-xl active:scale-95"
+            >
+              <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+              </svg>
+              GitHub
+            </button>
+
+            <p className="col-span-2 text-center text-[11px] text-slate-500 mt-1">
+              OAuth login does not work on non-secure domains (HTTP). This will work on{" "}
+              <span className="font-semibold">localhost</span> or{" "}
+              <span className="font-semibold">HTTPS</span>.
+            </p>
           </div>
 
           <p className="text-center text-slate-500 mt-10 text-sm font-medium">

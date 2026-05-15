@@ -171,6 +171,7 @@ const Home = () => {
 
                     <button
                       onClick={() => handleSocialLogin('github')}
+                      disabled
                       title="OAuth does not work on non-secure domains (HTTP). Use localhost or HTTPS."
                       className="flex items-center justify-center gap-3 py-3 bg-slate-900 text-white rounded-2xl hover:bg-slate-800 transition-all font-bold text-xs shadow-xl active:scale-95"
                     >
