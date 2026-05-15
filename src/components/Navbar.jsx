@@ -124,6 +124,7 @@ const Navbar = () => {
                   </>
                 )}
                 <a href={DOCS_URL} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors"><FileCode size={18} /> Docs</a>
+                <a href="/about-us" className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors"><User size={18} /> About Us</a>
               </nav>
             </div>
 
@@ -246,6 +247,10 @@ const Navbar = () => {
                   </button>
                   <a href={DOCS_URL} className="flex items-center justify-between p-4 text-slate-600 font-bold bg-slate-50 rounded-2xl">
                     <div className="flex items-center gap-3"><FileCode size={20} /> API Docs</div>
+                    <ExternalLink size={16} className="text-slate-400" />
+                  </a>
+                  <a href="/about-us" className="flex items-center justify-between p-4 text-slate-600 font-bold bg-slate-50 rounded-2xl">
+                    <div className="flex items-center gap-3"><User size={20} /> About Us</div>
                     <ExternalLink size={16} className="text-slate-400" />
                   </a>
                 </>

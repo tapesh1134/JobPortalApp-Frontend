@@ -66,7 +66,7 @@ const Footer = () => {
                     <div>
                         <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900 mb-6">Company</h4>
                         <ul className="space-y-4">
-                            <FooterLink to="/about" label="About Us" />
+                            <FooterLink to="/about-us" label="About Us" />
                             <FooterLink to="/contact" label="Contact" />
                         </ul>
                     </div>

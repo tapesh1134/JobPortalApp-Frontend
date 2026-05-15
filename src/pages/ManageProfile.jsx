@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { updateProfile } from '../redux/profileSlice';
-import { forgotPassword, resetPassword } from '../redux/authSlice'; // Import these
+import { forgotPassword, resetPassword } from '../redux/authSlice'; 
 import {
   fetchMySubscriptions, fetchInvoices
 } from '../redux/subscriptionSlice';
@@ -19,7 +19,7 @@ const ManageProfile = () => {
   const navigate = useNavigate();
 
   const { data: profile } = useSelector(state => state.profile);
-  const { user: authUser } = useSelector(state => state.auth); // Use auth email as source of truth
+  const { user: authUser } = useSelector(state => state.auth); 
   const { active: subscriptions, invoices } = useSelector(state => state.subscription);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -31,19 +31,23 @@ const ManageProfile = () => {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordData, setPasswordData] = useState({ otp: '', newPassword: '', confirmPassword: '' });
 
-  const isRecruiter = profile?.role === 'RECRUITER';
-  const isAdmin = profile?.role === 'ADMIN';
+  // FIX 1: Determine roles from authUser because profile is null for Admin
+  const isRecruiter = authUser?.role === 'RECRUITER';
+  const isAdmin = authUser?.role === 'ADMIN';
   const activeSub = subscriptions?.find(s => s.status === 'SUBSCRIBED');
 
+  // FIX 2: Initialize editData for Admin manually
   useEffect(() => {
-    if (profile) {
+    if (isAdmin) {
+      setEditData({ fullName: 'Administrator' });
+    } else if (profile) {
       setEditData(profile);
       if (isRecruiter) {
         dispatch(fetchMySubscriptions());
         dispatch(fetchInvoices());
       }
     }
-  }, [profile, dispatch, isRecruiter]);
+  }, [profile, dispatch, isRecruiter, isAdmin]);
 
   const handleUpdate = () => {
     let finalData = { ...editData };
@@ -54,7 +58,6 @@ const ManageProfile = () => {
     setIsEditing(false);
   };
 
-  // --- Password Handlers ---
   const handleRequestOTP = async () => {
     setIsChangingPassword(true);
     const result = await dispatch(forgotPassword(authUser.email));
@@ -89,7 +92,10 @@ const ManageProfile = () => {
     }
   };
 
-  if (!profile || !editData) return <LoadingSpinner />;
+  // FIX 3: Don't show loading spinner if it's an admin (since profile will be null)
+  if (!isAdmin && (!profile || !editData)) return <LoadingSpinner />;
+  // Added safety for Admin initialization
+  if (isAdmin && !editData) return <LoadingSpinner />;
 
   return (
     <div className="min-h-screen bg-[#f8fafc] pt-15 pb-15 px-4 sm:px-6 md:px-8 lg:px-12 font-sans antialiased text-slate-900 overflow-x-hidden">
@@ -98,18 +104,18 @@ const ManageProfile = () => {
         {/* 1. TOP HEADER BAR */}
         <div className="bg-white rounded-3xl sm:rounded-[2rem] p-5 sm:p-6 mb-6 shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-5 text-center sm:text-left">
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl relative shrink-0 ${activeSub ? 'bg-gradient-to-tr from-amber-400 to-orange-600 shadow-amber-100' : 'bg-slate-900'}`}>
-              {profile.fullName ? profile.fullName[0].toUpperCase() : 'A'}
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl relative shrink-0 ${isAdmin ? 'bg-rose-600' : (activeSub ? 'bg-gradient-to-tr from-amber-400 to-orange-600 shadow-amber-100' : 'bg-slate-900')}`}>
+              {isAdmin ? 'A' : (profile?.fullName ? profile.fullName[0].toUpperCase() : 'U')}
               {activeSub && <Crown size={16} className="absolute -top-2 -right-2 text-amber-500 fill-amber-500" />}
             </div>
             <div className="overflow-hidden">
               <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight truncate max-w-[250px] sm:max-w-none">
-                {profile.fullName || 'Administrator'}
+                {isAdmin ? 'System Administrator' : (profile?.fullName || 'User')}
               </h1>
               <p className="text-slate-400 font-bold text-[10px] flex flex-wrap justify-center sm:justify-start items-center gap-2 uppercase tracking-widest mt-1.5">
-                {isAdmin ? <span className="text-rose-600">Admin Access</span> : (activeSub ? <span className="text-amber-600">Premium Recruiter</span> : profile.role)}
+                {isAdmin ? <span className="text-rose-600">Admin Access</span> : (activeSub ? <span className="text-amber-600">Premium Recruiter</span> : authUser?.role)}
                 <span className="hidden sm:block h-1 w-1 bg-slate-200 rounded-full" /> 
-                <span className="truncate max-w-[200px] sm:max-w-none">{profile.email}</span>
+                <span className="truncate max-w-[200px] sm:max-w-none">{authUser?.email}</span>
               </p>
             </div>
           </div>
@@ -133,15 +139,15 @@ const ManageProfile = () => {
 
           {/* Left Column */}
           <div className={`${isAdmin ? 'max-w-xl mx-auto w-full' : 'lg:col-span-4'} space-y-6`}>
-            <Section title="Account Identity" icon={<User size={16} />} color="blue">
-              <InputField label="Full Name" icon={User} value={editData.fullName} name="fullName" isEditing={isEditing} onChange={setEditData} data={editData} />
-              <InputField label="Email Address" icon={Mail} value={profile.email} name="email" isEditing={false} onChange={()=>{}} data={editData} />
+            <Section title="Account Identity" icon={<User size={16} />} color={isAdmin ? "rose" : "blue"}>
+              <InputField label="Full Name" icon={User} value={editData?.fullName} name="fullName" isEditing={isEditing} onChange={setEditData} data={editData} />
+              <InputField label="Email Address" icon={Mail} value={authUser?.email} name="email" isEditing={false} onChange={()=>{}} data={editData} />
               {!isAdmin && (
-                <InputField label="Mobile No" icon={Phone} value={editData.mobile} name="mobile" type="number" isEditing={isEditing} onChange={setEditData} data={editData} />
+                <InputField label="Mobile No" icon={Phone} value={editData?.mobile} name="mobile" type="number" isEditing={isEditing} onChange={setEditData} data={editData} />
               )}
             </Section>
 
-            {/* SECURITY SECTION (Change Password) */}
+            {/* SECURITY SECTION */}
             <Section title="Security & Access" icon={<ShieldCheck size={16} />} color="rose">
               {passwordStep === 1 ? (
                 <div className="space-y-4">
@@ -202,7 +208,7 @@ const ManageProfile = () => {
           </div>
 
           {/* Right Column (Hidden for Admins) */}
-          {!isAdmin && (
+          {!isAdmin && editData && (
             <div className="lg:col-span-8 space-y-6">
               <Section title="Residency & Address" icon={<MapPin size={16} />} color="slate">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
@@ -231,7 +237,7 @@ const ManageProfile = () => {
                           <textarea className="w-full p-4 bg-slate-50 border-none rounded-2xl text-xs font-bold shadow-inner" placeholder="Java, React..." value={Array.isArray(editData.skills) ? editData.skills.join(', ') : editData.skills} onChange={e => setEditData({ ...editData, skills: e.target.value })} rows="3" />
                         ) : (
                           <div className="flex flex-wrap gap-1.5 mt-1">
-                            {profile.skills?.length > 0 ? profile.skills.map((s, i) => <span key={i} className="px-3 py-1 bg-indigo-50 text-indigo-600 text-[9px] font-black rounded-lg border border-indigo-100 uppercase">{s}</span>) : <span className="text-xs text-slate-400 font-bold">No skills added</span>}
+                            {profile?.skills?.length > 0 ? profile.skills.map((s, i) => <span key={i} className="px-3 py-1 bg-indigo-50 text-indigo-600 text-[9px] font-black rounded-lg border border-indigo-100 uppercase">{s}</span>) : <span className="text-xs text-slate-400 font-bold">No skills added</span>}
                           </div>
                         )}
                       </div>
@@ -248,7 +254,7 @@ const ManageProfile = () => {
   );
 };
 
-// UI SUB-COMPONENTS
+// Sub-components remains the same as your original
 const Section = ({ title, icon, color, children }) => (
   <div className="bg-white p-6 sm:p-7 rounded-3xl sm:rounded-[2.5rem] border border-slate-200 shadow-sm relative overflow-hidden">
     <div className={`absolute top-0 left-0 w-full h-1 bg-${color}-500`} />

@@ -28,6 +28,7 @@ import AdminDashboard from './pages/AdminDashboard'; // Added
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
 import ForgotPassword from './pages/ForgotPassword';
+import AboutUs from './pages/AboutUs';
 
 function App() {
   const dispatch = useDispatch();
@@ -126,6 +127,7 @@ function App() {
           <Route path="/job/:jobId/applicants" element={<JobApplicants />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path='/about-us' element={<AboutUs />} />
         </Routes>
         <Footer />
       </div>

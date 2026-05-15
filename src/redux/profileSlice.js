@@ -4,6 +4,11 @@ import api from '../services/api';
 export const fetchProfile = createAsyncThunk(
     'profile/fetch',
     async (email, thunkAPI) => {
+        const state = thunkAPI.getState();
+        const userRole = state.auth?.user?.role;
+        if (userRole === 'ADMIN') {
+            return null;
+        }
         try {
             const response = await api.get(`/users/email/${email}`);
             return response.data.data;
