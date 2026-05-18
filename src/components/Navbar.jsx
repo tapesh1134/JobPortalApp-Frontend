@@ -48,7 +48,7 @@ const Navbar = () => {
   useEffect(() => {
     if (!isAuthenticated || !user?.email) return;
 
-    const socket = new SockJS(`/web-socket/api/notifications/ws-notifications`);
+    const socket = new SockJS("/api/notifications/ws-notifications");
     const client = new Client({
       webSocketFactory: () => socket,
       reconnectDelay: 5000,

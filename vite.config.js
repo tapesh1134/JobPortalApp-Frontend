@@ -34,13 +34,6 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
-      "/web-socket": {
-        target: "http://localhost:8080",
-        changeOrigin: true,
-        secure: false,
-        ws: true,
-        rewrite: (path) => path.replace(/^\/web-socket/, '')
-      }
     }
   }
 })
